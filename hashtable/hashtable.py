@@ -22,6 +22,8 @@ class HashTable:
 
     def __init__(self, capacity):
         # Your code here
+        self.capacity = capacity
+        self.bucket_array = [None for i in range(capacity)]
 
 
     def get_num_slots(self):
@@ -64,6 +66,13 @@ class HashTable:
         """
         # Your code here
 
+        hash = 5381
+        byte_array = key.encode('utf-8')
+        for byte in byte_array:
+            hash = ((hash * 33) ^ byte) % 0x100000000
+        return hash
+
+
 
     def hash_index(self, key):
         """
@@ -83,6 +92,23 @@ class HashTable:
         """
         # Your code here
 
+        bucket_index = self.hash_index(key)
+        new_node = HashTableEntry(key, value)
+        existing_node = self.bucket_array[bucket_index]
+
+        if existing_node:
+            last_node = None
+            while existing_node:
+                if existing_node.key == key:
+                    existing_node.value = value
+                    return
+                last_node = existing_node
+                existing_node = existing_node.next
+            last_node.next = new_node
+        else:
+            self.bucket_array[bucket_index] = new_node
+
+
 
     def delete(self, key):
         """
@@ -94,6 +120,22 @@ class HashTable:
         """
         # Your code here
 
+        bucket_index = self.hash_index(key)
+        existing_node = self.bucket_array[bucket_index]
+
+        if existing_node:
+            last_node = None
+            while existing_node:
+                if existing_node.key == key:
+                    if last_node:
+                        last_node.next = existing_node.next
+                    else:
+                        self.bucket_array[bucket_index] = existing_node.next
+                last_node = existing_node
+                existing_node = existing_node.next
+        else:
+            return "Key not found"
+
 
     def get(self, key):
         """
@@ -104,6 +146,17 @@ class HashTable:
         Implement this.
         """
         # Your code here
+
+        bucket_index = self.hash_index(key)
+        existing_node = self.bucket_array[bucket_index]
+        if existing_node:
+            while existing_node:
+                if existing_node.key == key:
+                    return existing_node.value
+                existing_node = existing_node.next
+        else:
+            return None
+  
 
 
     def resize(self, new_capacity):
