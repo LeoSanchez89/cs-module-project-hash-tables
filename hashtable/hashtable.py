@@ -23,8 +23,8 @@ class HashTable:
     def __init__(self, capacity):
         # Your code here
         self.capacity = capacity
-        self.bucket_array = [None for i in range(capacity)]
-
+        self.bucket_array = [None] * capacity
+        self.size = 0
 
     def get_num_slots(self):
         """
@@ -37,7 +37,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
-
+        return len(self.bucket_array)
 
     def get_load_factor(self):
         """
@@ -46,6 +46,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        return (self.size / self.capacity)
 
 
     def fnv1(self, key):
@@ -72,6 +73,11 @@ class HashTable:
             hash = ((hash * 33) ^ byte) % 0x100000000
         return hash
 
+        # hash = 5381
+        # for i in key:
+        #     hash = (( hash << 5) + hash) + ord(i)
+        # return hash & 0xFFFFFFFF
+
 
 
     def hash_index(self, key):
@@ -81,6 +87,7 @@ class HashTable:
         """
         #return self.fnv1(key) % self.capacity
         return self.djb2(key) % self.capacity
+        # return self.djb2(key) % len(self.bucket_array)
 
     def put(self, key, value):
         """
@@ -92,10 +99,15 @@ class HashTable:
         """
         # Your code here
 
+        # bucket_index = self.hash_index(key)
+        # self.bucket_array[bucket_index] = value
+
+
         bucket_index = self.hash_index(key)
         new_node = HashTableEntry(key, value)
         existing_node = self.bucket_array[bucket_index]
 
+        self.size += 1
         if existing_node:
             last_node = None
             while existing_node:
@@ -105,8 +117,10 @@ class HashTable:
                 last_node = existing_node
                 existing_node = existing_node.next
             last_node.next = new_node
-        else:
+        else:   
             self.bucket_array[bucket_index] = new_node
+        if self.get_load_factor() > 0.7:
+            return self.resize(self.capacity * 2)
 
 
 
@@ -120,10 +134,18 @@ class HashTable:
         """
         # Your code here
 
+        # bucket_index = self.hash_index(key)
+        # existing_entry = self.bucket_array[bucket_index]
+        # if existing_entry:
+        #     self.bucket_array[bucket_index] = None
+        # else:
+        #     print("Key not found")
+
         bucket_index = self.hash_index(key)
         existing_node = self.bucket_array[bucket_index]
 
         if existing_node:
+            self.size -= 1
             last_node = None
             while existing_node:
                 if existing_node.key == key:
@@ -133,8 +155,10 @@ class HashTable:
                         self.bucket_array[bucket_index] = existing_node.next
                 last_node = existing_node
                 existing_node = existing_node.next
+        if self.get_load_factor() < 0.2:
+            return self.resize(int(self.capacity / 2))
         else:
-            return "Key not found"
+            print("Key not found")
 
 
     def get(self, key):
@@ -146,6 +170,13 @@ class HashTable:
         Implement this.
         """
         # Your code here
+
+        # bucket_index = self.hash_index(key)
+        # existing_entry = self.bucket_array[bucket_index]
+        # if existing_entry:
+        #     return self.bucket_array[bucket_index]
+        # else:
+        #     return None
 
         bucket_index = self.hash_index(key)
         existing_node = self.bucket_array[bucket_index]
@@ -167,7 +198,25 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        if new_capacity > 8:
+            self.capacity = new_capacity
+        else:
+            self.capacity = 8
+        old_array = self.bucket_array 
+        self.bucket_array = [None] * self.capacity
+        old_size = self.size
 
+        current_node = None
+
+        for entry in old_array:
+            current_node = entry
+            while current_node != None:
+                self.put(current_node.key, current_node.value)
+                current_node = current_node.next
+        self.size = old_size
+
+
+       
 
 
 if __name__ == "__main__":
